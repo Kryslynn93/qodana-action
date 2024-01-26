@@ -19,9 +19,6 @@ on:
       - '.github/workflows/node.yml'
   schedule:
     - cron: '0 0 * * 0'
-permissions:
-  contents: write
-  pull-requests: write
 jobs:
   gradleValidation:
     name: gradle-wrapper
@@ -29,8 +26,6 @@ jobs:
     steps:
       - name: Fetch Sources
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
       - name: Gradle Wrapper Validation
         uses: gradle/wrapper-validation-action@v1.1.0
 
@@ -52,32 +47,14 @@ jobs:
     steps:
       - name: Fetch sources
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: zulu
           java-version: 11
           cache: gradle
-      - name: Install AppMap tools
-        id: install-appmap
-        uses: getappmap/install-action@v1
-        with:
-          project-type: gradle
-      - name: Commit changes
-        uses: EndBug/add-and-commit@v9
-        with:
-          message: "ci: Add AppMap language agent and appmap.yml"
       - name: Run tests
         run: ./gradlew appmap test -PtestGradleVersion="${{ matrix.gradleVersion }}"
-      # Begin AppMap bootstrap archive step
-      - name: Archive AppMaps
-        id: appmap-bootstrap-archive-appmaps
-        uses: getappmap/archive-action@v1
-        with:
-          revision: ${{ github.event.pull_request.base.sha }}
-      # End AppMap bootstrap archive step
       - name: Collect test results
         if: ${{ failure() }}
         uses: actions/upload-artifact@v3
